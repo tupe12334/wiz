@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Dashboard</h1>
+<p>Welcome back, {{ current_user.username }}!</p>
+
+<div class="card">
+    <div class="card-header"><h2>Your Onboarding</h2></div>
+    <p>Welcome to Wizn't! Complete the onboarding steps below to finalize your account.</p>
+    <table>
+        <thead><tr><th>Step</th><th>Description</th><th>Action</th></tr></thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>Review your onboarding checklist</td>
+                <td><a href="/reports" class="btn btn-primary">Checklist</a></td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Complete onboarding verification</td>
+                <td>
+                    {% if checklist_complete and current_user.role == 'admin' %}
+                    <a href="/audit" class="btn btn-primary">Complete</a>
+                    {% else %}
+                    <span class="btn" style="opacity:0.4;cursor:not-allowed;">Locked</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

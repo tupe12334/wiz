@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "description": "Data Loss Prevention blocked patterns",
+  "config_key": "FLAG{4_c0nf1g_m4st3r_f0und_th3_rul3s}",
+  "blocked_patterns": [
+    "FLAG{",
+    "api_key=",
+    "private_key",
+    "BEGIN RSA",
+    "aws_access_key"
+  ],
+  "updated": "2024-01-15",
+  "updated_by": "security-team"
+}

@@ -1,0 +1,51 @@
+# Recreates the exact permission set discovered via `kubectl auth can-i --list`
+# in the original challenge: broad read access plus pods/exec (so the
+# player has a real shell into any pod) but NO direct `get`/`list` on
+# secrets, and no cluster-scope access at all.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: challenge-user
+  namespace: challenge
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: challenge-user-role
+  namespace: challenge
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["configmaps", "endpoints", "events", "services"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets"]
+    verbs: ["get", "list", "patch"]
+  - apiGroups: ["authentication.k8s.io"]
+    resources: ["selfsubjectreviews"]
+    verbs: ["create"]
+  - apiGroups: ["authorization.k8s.io"]
+    resources: ["selfsubjectaccessreviews", "selfsubjectrulesreviews"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: challenge-user-binding
+  namespace: challenge
+subjects:
+  - kind: ServiceAccount
+    name: challenge-user
+    namespace: challenge
+roleRef:
+  kind: Role
+  name: challenge-user-role
+  apiGroup: rbac.authorization.k8s.io

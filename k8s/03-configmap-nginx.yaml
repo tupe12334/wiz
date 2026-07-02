@@ -1,0 +1,98 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-conf
+  namespace: challenge
+data:
+  nginx.conf: |
+    worker_processes auto;
+    events { worker_connections 1024; }
+    http {
+        include mime.types;
+        default_type application/octet-stream;
+        sendfile on;
+        log_format dlp '$remote_addr - $remote_user [$time_local] "$request" $status';
+        access_log /dev/stdout dlp;
+        error_log /dev/stderr info;
+        lua_package_path "/etc/nginx/lua/?.lua;;";
+        server {
+            listen 80;
+            server_name _;
+            location / {
+                access_by_lua_file /etc/nginx/lua/dlp.lua;
+                proxy_pass http://app:8080;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            }
+        }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dlp-lua
+  namespace: challenge
+data:
+  dlp.lua: |
+    local cjson = require("cjson")
+
+    local function load_patterns()
+        local f = io.open("/etc/nginx/dlp-rules/patterns.json", "r")
+        if not f then
+            return {}
+        end
+        local raw = f:read("*a")
+        f:close()
+        local ok, decoded = pcall(cjson.decode, raw)
+        if not ok then
+            return {}
+        end
+        return decoded.blocked_patterns or {}
+    end
+
+    local method = ngx.req.get_method()
+    if method ~= "POST" and method ~= "PUT" and method ~= "PATCH" then
+        return
+    end
+
+    ngx.req.read_body()
+    local body = ngx.req.get_body_data() or ""
+
+    local patterns = load_patterns()
+    for _, pattern in ipairs(patterns) do
+        if string.find(body, pattern, 1, true) then
+            ngx.log(
+                ngx.INFO,
+                "[dlp] DLP: Incident logged - FLAG{3_dlp_1s_bl0ck1ng_y0ur_fl4g}, ",
+                "client: ", ngx.var.remote_addr,
+                ", server: ", ngx.var.host,
+                ", request: \"", method, " ", ngx.var.request_uri, " HTTP/1.1\"",
+                ", host: \"", ngx.var.host, "\"",
+                ", matched_pattern: \"", pattern, "\""
+            )
+            return ngx.exit(444)
+        end
+    end
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dlp-rules
+  namespace: challenge
+data:
+  patterns.json: |
+    {
+      "version": "1.0",
+      "description": "Data Loss Prevention blocked patterns",
+      "config_key": "FLAG{4_c0nf1g_m4st3r_f0und_th3_rul3s}",
+      "blocked_patterns": [
+        "FLAG{",
+        "api_key=",
+        "private_key",
+        "BEGIN RSA",
+        "aws_access_key"
+      ],
+      "updated": "2024-01-15",
+      "updated_by": "security-team"
+    }

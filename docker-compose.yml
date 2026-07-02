@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_root_pw
+      POSTGRES_DB: ctfapp
+    volumes:
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+      - ./secrets/checkpoint7-flag:/etc/secrets/checkpoint7-flag:ro
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432" # exposed for convenience only; not needed to solve the challenge
+
+  credential-store:
+    build: ./credential-store
+    environment:
+      CREDENTIAL_STORE_PEPPER: wiznt-onboarding-pepper-2024
+    volumes:
+      - ./secrets/service-token:/var/run/secrets/kubernetes.io/serviceaccount/token:ro
+    depends_on:
+      - postgres
+
+  app:
+    build: ./app
+    environment:
+      DATABASE_CONNECTION_STRING: postgresql://appuser:dbpassword123@postgres:5432/ctfapp
+      CREDENTIAL_STORE_API: http://credential-store:8080
+    volumes:
+      - ./secrets/encryption-key:/etc/secrets/encryption-key:ro
+      - ./secrets/service-token:/var/run/secrets/kubernetes.io/serviceaccount/token:ro
+    depends_on:
+      - postgres
+      - credential-store
+
+  nginx:
+    build: ./nginx
+    ports:
+      - "8080:80"
+    depends_on:
+      - app
+
+  # The "you have a shell in the cluster" recon box. No credentials are
+  # pre-seeded here - only network access. It deliberately does NOT get
+  # the shared service-token (only `app` and `credential-store` do) -
+  # in the real challenge, every pod's ServiceAccount token is unique
+  # and this box's wouldn't satisfy credential-store's check either.
+  # That's what forces you through the app's own admin+captcha flow
+  # instead of hitting credential-store directly.
+  shell:
+    build: ./shell
+    depends_on:
+      - postgres
+      - app
+      - credential-store
+
+volumes:
+  pgdata:

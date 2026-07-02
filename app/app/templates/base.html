@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OnBored - Wizn't</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+{% if current_user %}
+<nav class="navbar">
+    <div class="logo">
+        <span class="brand">Wizn't</span>
+        <span class="subtitle">OnBored</span>
+    </div>
+    <ul class="nav-links">
+        <li><a href="/dashboard" class="{{ 'active' if active_page == 'dashboard' }}">Dashboard</a></li>
+        <li><a href="/reports" class="{{ 'active' if active_page == 'reports' }}">Checklist</a></li>
+        <li><a href="/data" class="{{ 'active' if active_page == 'data' }}">Data</a></li>
+        {% if current_user.role == 'admin' %}
+        <li><a href="/audit" class="{{ 'active' if active_page == 'audit' }}">Audit</a></li>
+        <li><a href="/admin" class="{{ 'active' if active_page == 'admin' }}">Admin</a></li>
+        {% endif %}
+    </ul>
+    <div class="user-info">
+        <span class="username">{{ current_user.username }}</span>
+        <span class="role">{{ current_user.role }}</span>
+        <a href="/logout" class="logout-btn">Logout</a>
+    </div>
+</nav>
+{% endif %}
+
+<main class="content {{ 'full-width' if not current_user }}">
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>

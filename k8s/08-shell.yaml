@@ -1,0 +1,19 @@
+# This is "your" pod - the one you get exec access into, running as the
+# challenge-user ServiceAccount with the RBAC role from 01-rbac.yaml.
+# Its ServiceAccount token auto-mounts at the standard k8s path, but it
+# is a genuinely different (and differently-signed) token than the one
+# app/credential-store share - so unlike in the docker-compose version,
+# calling credential-store directly from here won't authenticate. You
+# have to route through the app pod's own admin API.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: shell
+  namespace: challenge
+  labels: { app: shell }
+spec:
+  serviceAccountName: challenge-user
+  containers:
+    - name: shell
+      image: wiz-shell:local # docker build -t wiz-shell:local ./shell
+      command: ["sleep", "infinity"]

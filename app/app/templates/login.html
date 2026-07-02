@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="logo">
+            <span class="brand">Wizn't</span>
+            <span class="subtitle">OnBored</span>
+        </div>
+
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Enter your username" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter your password" required>
+        </div>
+
+        <div id="errorMsg" class="alert alert-error" style="display:none;"></div>
+
+        <button type="submit" class="btn btn-primary" style="width:auto;" id="loginBtn">Sign in &rarr;</button>
+    </div>
+</div>
+<script>
+document.getElementById('loginBtn').addEventListener('click', async () => {
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const errorMsg = document.getElementById('errorMsg');
+    errorMsg.style.display = 'none';
+    try {
+        const resp = await fetch('/api/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({username, password}),
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+            window.location.href = '/dashboard';
+        } else {
+            errorMsg.textContent = data.error || 'Login failed';
+            errorMsg.style.display = 'block';
+        }
+    } catch (e) {
+        errorMsg.textContent = 'Connection error. The server may have blocked the request.';
+        errorMsg.style.display = 'block';
+    }
+});
+</script>
+{% endblock %}

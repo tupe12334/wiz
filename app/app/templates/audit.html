@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Complete Onboarding</h1>
+<p class="subtitle">Verify your onboarding completion and finalize your account</p>
+
+<div class="card">
+    <div class="card-header"><h2>Onboarding Verification</h2></div>
+    <p>Clicking below runs a statistics job over the audit log to verify your activity meets policy.</p>
+    <button id="generate-btn" class="btn btn-primary">Complete Onboarding</button>
+
+    <div id="loading" style="display:none;">Running verification&hellip;</div>
+    <div id="error" class="alert alert-error" style="display:none;"></div>
+    <div id="result-container" style="display:none;">
+        <div id="success" style="display:none;">
+            <p>Total users: <span id="total-users"></span></p>
+            <p>Total bursts: <span id="total-bursts"></span></p>
+            <p id="flag-line"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('generate-btn').addEventListener('click', async () => {
+    const container = document.getElementById('result-container');
+    const loading = document.getElementById('loading');
+    const success = document.getElementById('success');
+    const error = document.getElementById('error');
+
+    container.style.display = 'block';
+    loading.style.display = 'block';
+    success.style.display = 'none';
+    error.style.display = 'none';
+
+    try {
+        const resp = await fetch('/api/audit/statistics');
+        const data = await resp.json();
+        loading.style.display = 'none';
+
+        if (data.status === 'success' && data.flag) {
+            success.style.display = 'block';
+            document.getElementById('total-users').textContent = data.total_users ? data.total_users.toLocaleString() : '0';
+            document.getElementById('total-bursts').textContent = data.total_bursts ? data.total_bursts.toLocaleString() : '0';
+            document.getElementById('flag-line').textContent = data.flag;
+        } else if (data.status === 'timeout') {
+            error.style.display = 'block';
+            error.textContent = 'Verification timed out. The query is too slow.';
+        } else {
+            error.style.display = 'block';
+            error.textContent = data.message || JSON.stringify(data);
+        }
+    } catch (e) {
+        loading.style.display = 'none';
+        error.style.display = 'block';
+        error.textContent = 'Request failed: ' + e;
+    }
+});
+</script>
+{% endblock %}

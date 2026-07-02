@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Onboarding Checklist</h1>
+<p>Complete all modules to verify your onboarding</p>
+
+<div class="card">
+    <div class="card-header"><h2>Onboarding Modules</h2></div>
+    <table>
+        <thead><tr><th>Module</th><th>Description</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for m in modules %}
+            <tr>
+                <td>{{ m.name }}</td>
+                <td>{{ m.description }}</td>
+                <td>
+                    {% if m.completed %}
+                    <span class="badge badge-user">Complete</span>
+                    {% else %}
+                    <span class="badge" style="background:#fee;color:#c00;">Incomplete</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if error == 'incomplete' %}
+<div class="alert alert-error">
+    Your report cannot be generated until every module above is marked complete.
+</div>
+{% elif error == 'data_error' %}
+<div class="alert alert-error">
+    Report generation failed: {{ traceback }}
+</div>
+{% elif report %}
+<div class="card">
+    <div class="card-header"><h2>Report</h2></div>
+    <p>Total: {{ report.total }} across {{ report.record_count }} records.</p>
+    <pre>{{ report.by_category }}</pre>
+</div>
+{% endif %}
+{% endblock %}

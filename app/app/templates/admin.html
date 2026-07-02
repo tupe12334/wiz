@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Admin</h1>
+<p>Provision a new employee account. This calls the admin API which requires a
+captcha verification token in the <code>X-Captcha-Token</code> header.</p>
+
+<div class="card">
+    <div class="card-header"><h2>Direct Access</h2></div>
+    <p>
+        The admin UI here is deliberately bare - Derek never finished it.
+        Use <code>/api/admin/create-account</code> directly (see the
+        write-up) to provision your own account.
+    </p>
+</div>
+{% endblock %}

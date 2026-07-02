@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  namespace: challenge
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: app }
+  template:
+    metadata:
+      labels: { app: app }
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: app
+          image: wiz-app:local # docker build -t wiz-app:local ./app
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DATABASE_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef: { name: postgres-credentials, key: DATABASE_CONNECTION_STRING }
+            - name: CREDENTIAL_STORE_API
+              value: http://credential-store:8080
+          volumeMounts:
+            - name: encryption-key
+              mountPath: /etc/secrets/encryption-key
+              subPath: encryption-key
+              readOnly: true
+            - name: service-token
+              mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+              readOnly: true
+      volumes:
+        - name: encryption-key
+          secret: { secretName: encryption-key }
+        - name: service-token
+          secret:
+            secretName: service-token
+            items:
+              - key: token
+                path: token
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app
+  namespace: challenge
+spec:
+  selector: { app: app }
+  ports:
+    - port: 8080
+      targetPort: 8080
