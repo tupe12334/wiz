@@ -49,6 +49,12 @@ services:
   # instead of hitting credential-store directly.
   shell:
     build: ./shell
+    volumes:
+      # Small helper scripts used by demos/*.tape so the recordings type
+      # short, readable commands instead of multi-line inline python.
+      # Not required to solve anything - see WRITEUP.md for the raw
+      # commands these wrap.
+      - ./demos/scripts:/scripts:ro
     depends_on:
       - postgres
       - app

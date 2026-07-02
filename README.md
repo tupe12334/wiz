@@ -66,6 +66,10 @@ connections`), then:
 There is no `kubectl` in Compose mode - anywhere the write-up says
 `kubectl exec app-... -- ...`, use `docker compose exec app ...` instead.
 
+Prefer to watch it first? [`demos/`](demos/) has a recorded GIF per
+challenge, showing the exact commands from the write-up run against a
+live copy of this stack.
+
 ## Quick start (Kubernetes)
 
 Needs a local cluster (kind, minikube, k3d, ...) and the images built
